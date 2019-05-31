@@ -1,0 +1,42 @@
+pipeline{
+    agent any 
+    triggers {pollSCM("* * * * *")}
+    options {
+         skipStagesAfterUnstable()
+    timeout (time:5, unit:"MINUTES")
+    }
+    stages{
+        stage ("Checkout Stage"){
+            steps {
+                git 'https://github.com/squad44/simple_java_project_with_jacoco.git'
+            }
+        }
+    stage('Compile stage'){
+        steps{
+            withMaven(jdk: "local", maven: "m2"){
+            sh "mvn -X compile"
+        }
+    }
+    }
+    stage("Test"){
+        steps{
+            withMaven(jdk: "local", maven: "m2"){
+            sh "mvn -X test"
+        }
+    }
+    }
+    stage("Jacoco-coverage"){
+        steps{
+            jacoco buildOverBuild: true, changeBuildStatus: true, deltaBranchCoverage: '40', deltaClassCoverage: '40', deltaComplexityCoverage: '40', deltaInstructionCoverage: '40', deltaLineCoverage: '40', deltaMethodCoverage: '40', maximumMethodCoverage: '75', minimumMethodCoverage: '50'
+         script{
+             currentBuild.result = "UNSATBLE"
+         }
+        }
+    }
+    stage("Echo"){
+        steps{
+            echo "bulid is unstable "
+        }
+    }
+}
+}
